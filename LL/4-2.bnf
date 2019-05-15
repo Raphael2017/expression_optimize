@@ -1,0 +1,7 @@
+@@
+if then else E end
+@@
+<S> <X>
+@@
+<S> ::= if E then <S> <X>
+<X> ::= end | else S end

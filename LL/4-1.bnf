@@ -1,0 +1,11 @@
+@@
+id num lp rp star div plus minus dollar
+@@
+<S> <E>  <T>  <F> <ADD> <MUL>
+@@
+<S> ::= <E> dollar
+<E> ::= <T> { <ADD> <T> }
+<T> ::= <F> { <MUL> <F> }
+<F> ::= id | num | lp <E> rp
+<ADD> ::= plus | minus
+<MUL> ::= star | div

@@ -1,0 +1,177 @@
+@@
+UNION EXCEPT INTERSECT ALL <left paren> <right paren> <asterisk> SELECT <comma> <period>
+FROM AS CROSS JOIN NATURAL INNER OUTER LEFT RIGHT FULL ON USING WHERE GROUP BY COLLATE HAVING
+VALUES TABLE CORRESPONDING
+@@
+<direct SQL data statement>
+<direct select statement: multiple rows>
+<delete statement: searched>
+<insert statement>
+<update statement: searched>
+<query expression>
+<non-join query expression>
+<joined table>
+<non-join query expression>
+<non-join query term>
+<non-join query primary>
+<simple table>
+<query specification>
+<set quantifier>
+<select list>
+<select sublist>
+<derived column>
+<as clause>
+<table expression>
+<from clause>
+<table reference>
+<correlation specification>
+<derived column list>
+<derived table>
+<table subquery>
+<subquery>
+<cross join>
+<qualified join>
+<join type>
+<outer join type>
+<join specification>
+<join condition>
+<named columns join>
+<join column list>
+<where clause>
+<group by clause>
+<grouping column reference list>
+<grouping column reference>
+<collate clause>
+<collation name>
+<having clause>
+<table value constructor>
+<table value constructor list>
+<explicit table>
+<query term>
+<corresponding spec>
+<corresponding column list>
+<query primary>
+<order by clause>
+<qualifier>
+<value expression>
+<column name>
+<table name>
+<correlation name>
+<column name list>
+<search condition>
+<column reference>
+<qualified name>
+<row value constructor>
+<query expression op>
+<cross or qualified join rest>
+<table reference1>
+@@
+<direct SQL data statement> ::=
+		<delete statement: searched>
+	|	<direct select statement: multiple rows>
+	|	<insert statement>
+    |   <update statement: searched>
+
+<direct select statement: multiple rows> ::= <query expression> [ <order by clause> ]
+
+<query expression> ::= <non-join query expression>
+
+<non-join query expression> ::=
+		<non-join query term> { <query expression op> [ ALL ] [ <corresponding spec> ] <non-join query term> }
+
+<query expression op> ::= UNION | EXCEPT
+
+<non-join query term> ::=
+        <non-join query primary> { INTERSECT [ ALL ] [ <corresponding spec> ] <non-join query primary> }
+
+<non-join query primary> ::= <simple table> | <left paren> <non-join query expression> <right paren>
+
+<simple table> ::=
+		<query specification>
+	|	<table value constructor>
+    |   <explicit table>
+
+<query specification> ::=
+    SELECT [ <set quantifier> ] <select list> <table expression>
+
+<select list> ::=
+		<asterisk>
+    |   <select sublist> { <comma> <select sublist> }
+
+<select sublist> ::= <derived column> | <qualifier> <period> <asterisk>
+
+<derived column> ::= <value expression> [ <as clause> ]
+
+<as clause> ::= [ AS ] <column name>
+
+<table expression> ::=
+		<from clause>
+		[ <where clause> ]
+		[ <group by clause> ]
+		[ <having clause> ]
+
+<from clause> ::= FROM <table reference> { <comma> <table reference> }
+
+<table reference> ::=
+        <table reference1> { <cross or qualified join rest> }
+
+<cross or qualified join rest> ::=
+        CROSS JOIN <table reference1>
+    |   [ NATURAL ] [ <join type> ] JOIN <table reference1> [ <join specification> ]
+
+<table reference1> ::=
+	    <table name> [ <correlation specification> ]
+	|   <derived table> <correlation specification>
+	|   <left paren> <table reference> <right paren>
+
+<correlation specification> ::=
+		[ AS ] <correlation name> [ <left paren> <derived column list> <right paren> ]
+
+<derived column list> ::= <column name list>
+
+<derived table> ::= <table subquery>
+
+<table subquery> ::= <subquery>
+
+<subquery> ::= <left paren> <query expression> <right paren>
+
+<join type> ::=
+		INNER
+	|   <outer join type> [ OUTER ]
+
+<outer join type> ::= LEFT | RIGHT | FULL
+
+<join specification> ::= <join condition> | <named columns join>
+
+<join condition> ::= ON <search condition>
+
+<named columns join> ::= USING <left paren> <join column list> <right paren>
+
+<join column list> ::= <column name list>
+
+<where clause> ::= WHERE <search condition>
+
+<group by clause> ::= GROUP BY <grouping column reference list>
+
+<grouping column reference list> ::=
+		<grouping column reference> { <comma> <grouping column reference> }
+
+<grouping column reference> ::= <column reference> [ <collate clause> ]
+
+<collate clause> ::= COLLATE <collation name>
+
+<collation name> ::= <qualified name>
+
+<having clause> ::= HAVING <search condition>
+
+<table value constructor> ::= VALUES <table value constructor list>
+
+<table value constructor list> ::= <row value constructor> { <comma> <row value constructor> }
+
+<explicit table> ::= TABLE <table name>
+
+<corresponding spec> ::= CORRESPONDING [ BY <left paren> <corresponding column list> <right paren> ]
+
+<corresponding column list> ::= <column name list>
+
+

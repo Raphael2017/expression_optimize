@@ -1,0 +1,36 @@
+##
+<INTNUM> <NIL> <TRUE> <FALSE> <STRING> <MINUS>
+<lparen> <rparen> <IDENTIFIER> <dot> <lbracket>
+<rbracket> <LT> <GT> <LE> <GE> <EQ> <NEQ> <PLUS>
+<MINUS> <TIMES> <DIVIDE> <assign> <OR> <AND> <comma>
+##
+<expr> <aaaa> <bbbb> <cccc> <dddd> <eeee> <ffff>
+<expr list> <fun call or left value rest> <compare> <arithmetic1>
+<arithmetic2> <opt assign expr> <opt OR bbbb>
+<opt AND cccc> <opt compare dddd> <opt arithmetic1 eeee>
+<opt arithmetic2 ffff> <opt expr list> <opt comma expr list rest>
+<opt left value rest>
+##
+<expr> -> <aaaa> <opt assign expr>;
+<opt assign expr> -> | <assign> <expr> <opt assign expr> ;
+<aaaa> -> <bbbb> <opt OR bbbb>;
+<opt OR bbbb> ->  | <OR> <bbbb> <opt OR bbbb>;
+<bbbb> -> <cccc> <opt AND cccc>;
+<opt AND cccc> -> | <AND> <cccc> <opt AND cccc>;
+<cccc> -> <dddd> <opt compare dddd>;
+<opt compare dddd> -> | <compare> <dddd> <opt compare dddd>;
+<dddd> -> <eeee> <opt arithmetic1 eeee>;
+<opt arithmetic1 eeee> ->  | <arithmetic1> <eeee> <opt arithmetic1 eeee>;
+<eeee> -> <ffff> <opt arithmetic2 ffff>;
+<opt arithmetic2 ffff> ->  | <arithmetic2> <ffff> <opt arithmetic2 ffff>;
+<ffff> -> <INTNUM> | <NIL> | <TRUE> | <FALSE> | <STRING>
+            | <MINUS> <ffff> | <lparen> <expr> <rparen>
+            | <IDENTIFIER> <fun call or left value rest>;
+<fun call or left value rest> -> <lparen> <opt expr list> <rparen> | <opt left value rest>;
+<opt expr list> ->  | <expr list> ;
+<expr list> -> <expr> <opt comma expr list rest>;
+<opt comma expr list rest> -> | <comma> <expr list> <opt comma expr list rest>;
+<opt left value rest> ->  | <dot> <IDENTIFIER> <opt left value rest> | <lbracket> <expr> <rbracket> <opt left value rest>;
+<compare> -> <LT> | <GT> | <LE> | <GE> | <EQ> | <NEQ>;
+<arithmetic1> -> <PLUS> | <MINUS>;
+<arithmetic2> -> <TIMES> | <DIVIDE>;

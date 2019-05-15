@@ -1,0 +1,563 @@
+Terminals unused in grammar
+
+   SEMI
+
+
+Grammar
+
+    0 $accept: all $end
+
+    1 all: rulelist
+
+    2 rulelist: rule_
+    3         | rule_ rulelist
+
+    4 rule_: lhs ASSIGN rhs
+
+    5 lhs: DOT id
+
+    6 rhs: alternatives
+
+    7 alternatives: alternative
+    8             | alternative BAR alternatives
+
+    9 alternative: element_list
+
+   10 element_list: element
+   11             | element element_list
+
+   12 element: optional
+   13        | zeroormore
+   14        | oneormore
+   15        | text
+   16        | id
+
+   17 optional: LEND alternatives REND
+
+   18 zeroormore: LBRACE alternatives RBRACE
+
+   19 oneormore: LPAREN alternatives RPAREN
+
+   20 text: ID
+
+   21 id: LT ruleid GT
+
+   22 ruleid: ID
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+ID (258) 20 22
+LT (259) 21
+GT (260) 21
+BAR (261) 8
+LEND (262) 17
+REND (263) 17
+LBRACE (264) 18
+RBRACE (265) 18
+LPAREN (266) 19
+RPAREN (267) 19
+ASSIGN (268) 4
+SEMI (269)
+DOT (270) 5
+
+
+Nonterminals, with rules where they appear
+
+$accept (16)
+    on left: 0
+all (17)
+    on left: 1, on right: 0
+rulelist (18)
+    on left: 2 3, on right: 1 3
+rule_ (19)
+    on left: 4, on right: 2 3
+lhs (20)
+    on left: 5, on right: 4
+rhs (21)
+    on left: 6, on right: 4
+alternatives (22)
+    on left: 7 8, on right: 6 8 17 18 19
+alternative (23)
+    on left: 9, on right: 7 8
+element_list (24)
+    on left: 10 11, on right: 9 11
+element (25)
+    on left: 12 13 14 15 16, on right: 10 11
+optional (26)
+    on left: 17, on right: 12
+zeroormore (27)
+    on left: 18, on right: 13
+oneormore (28)
+    on left: 19, on right: 14
+text (29)
+    on left: 20, on right: 15
+id (30)
+    on left: 21, on right: 5 16
+ruleid (31)
+    on left: 22, on right: 21
+
+
+State 0
+
+    0 $accept: . all $end
+    1 all: . rulelist
+    2 rulelist: . rule_
+    3         | . rule_ rulelist
+    4 rule_: . lhs ASSIGN rhs
+    5 lhs: . DOT id
+
+    DOT  shift, and go to state 1
+
+    all       go to state 2
+    rulelist  go to state 3
+    rule_     go to state 4
+    lhs       go to state 5
+
+
+State 1
+
+    5 lhs: DOT . id
+   21 id: . LT ruleid GT
+
+    LT  shift, and go to state 6
+
+    id  go to state 7
+
+
+State 2
+
+    0 $accept: all . $end
+
+    $end  shift, and go to state 8
+
+
+State 3
+
+    1 all: rulelist .
+
+    $default  reduce using rule 1 (all)
+
+
+State 4
+
+    2 rulelist: . rule_
+    2         | rule_ .  [$end]
+    3         | . rule_ rulelist
+    3         | rule_ . rulelist
+    4 rule_: . lhs ASSIGN rhs
+    5 lhs: . DOT id
+
+    DOT  shift, and go to state 1
+
+    $default  reduce using rule 2 (rulelist)
+
+    rulelist  go to state 9
+    rule_     go to state 4
+    lhs       go to state 5
+
+
+State 5
+
+    4 rule_: lhs . ASSIGN rhs
+
+    ASSIGN  shift, and go to state 10
+
+
+State 6
+
+   21 id: LT . ruleid GT
+   22 ruleid: . ID
+
+    ID  shift, and go to state 11
+
+    ruleid  go to state 12
+
+
+State 7
+
+    5 lhs: DOT id .
+
+    $default  reduce using rule 5 (lhs)
+
+
+State 8
+
+    0 $accept: all $end .
+
+    $default  accept
+
+
+State 9
+
+    3 rulelist: rule_ rulelist .
+
+    $default  reduce using rule 3 (rulelist)
+
+
+State 10
+
+    4 rule_: lhs ASSIGN . rhs
+    6 rhs: . alternatives
+    7 alternatives: . alternative
+    8             | . alternative BAR alternatives
+    9 alternative: . element_list
+   10 element_list: . element
+   11             | . element element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    rhs           go to state 17
+    alternatives  go to state 18
+    alternative   go to state 19
+    element_list  go to state 20
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 11
+
+   22 ruleid: ID .
+
+    $default  reduce using rule 22 (ruleid)
+
+
+State 12
+
+   21 id: LT ruleid . GT
+
+    GT  shift, and go to state 27
+
+
+State 13
+
+   20 text: ID .
+
+    $default  reduce using rule 20 (text)
+
+
+State 14
+
+    7 alternatives: . alternative
+    8             | . alternative BAR alternatives
+    9 alternative: . element_list
+   10 element_list: . element
+   11             | . element element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   17         | LEND . alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    alternatives  go to state 28
+    alternative   go to state 19
+    element_list  go to state 20
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 15
+
+    7 alternatives: . alternative
+    8             | . alternative BAR alternatives
+    9 alternative: . element_list
+   10 element_list: . element
+   11             | . element element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   18           | LBRACE . alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    alternatives  go to state 29
+    alternative   go to state 19
+    element_list  go to state 20
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 16
+
+    7 alternatives: . alternative
+    8             | . alternative BAR alternatives
+    9 alternative: . element_list
+   10 element_list: . element
+   11             | . element element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   19          | LPAREN . alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    alternatives  go to state 30
+    alternative   go to state 19
+    element_list  go to state 20
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 17
+
+    4 rule_: lhs ASSIGN rhs .
+
+    $default  reduce using rule 4 (rule_)
+
+
+State 18
+
+    6 rhs: alternatives .
+
+    $default  reduce using rule 6 (rhs)
+
+
+State 19
+
+    7 alternatives: alternative .  [$end, REND, RBRACE, RPAREN, DOT]
+    8             | alternative . BAR alternatives
+
+    BAR  shift, and go to state 31
+
+    $default  reduce using rule 7 (alternatives)
+
+
+State 20
+
+    9 alternative: element_list .
+
+    $default  reduce using rule 9 (alternative)
+
+
+State 21
+
+   10 element_list: . element
+   10             | element .  [$end, BAR, REND, RBRACE, RPAREN, DOT]
+   11             | . element element_list
+   11             | element . element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    $default  reduce using rule 10 (element_list)
+
+    element_list  go to state 32
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 22
+
+   12 element: optional .
+
+    $default  reduce using rule 12 (element)
+
+
+State 23
+
+   13 element: zeroormore .
+
+    $default  reduce using rule 13 (element)
+
+
+State 24
+
+   14 element: oneormore .
+
+    $default  reduce using rule 14 (element)
+
+
+State 25
+
+   15 element: text .
+
+    $default  reduce using rule 15 (element)
+
+
+State 26
+
+   16 element: id .
+
+    $default  reduce using rule 16 (element)
+
+
+State 27
+
+   21 id: LT ruleid GT .
+
+    $default  reduce using rule 21 (id)
+
+
+State 28
+
+   17 optional: LEND alternatives . REND
+
+    REND  shift, and go to state 33
+
+
+State 29
+
+   18 zeroormore: LBRACE alternatives . RBRACE
+
+    RBRACE  shift, and go to state 34
+
+
+State 30
+
+   19 oneormore: LPAREN alternatives . RPAREN
+
+    RPAREN  shift, and go to state 35
+
+
+State 31
+
+    7 alternatives: . alternative
+    8             | . alternative BAR alternatives
+    8             | alternative BAR . alternatives
+    9 alternative: . element_list
+   10 element_list: . element
+   11             | . element element_list
+   12 element: . optional
+   13        | . zeroormore
+   14        | . oneormore
+   15        | . text
+   16        | . id
+   17 optional: . LEND alternatives REND
+   18 zeroormore: . LBRACE alternatives RBRACE
+   19 oneormore: . LPAREN alternatives RPAREN
+   20 text: . ID
+   21 id: . LT ruleid GT
+
+    ID      shift, and go to state 13
+    LT      shift, and go to state 6
+    LEND    shift, and go to state 14
+    LBRACE  shift, and go to state 15
+    LPAREN  shift, and go to state 16
+
+    alternatives  go to state 36
+    alternative   go to state 19
+    element_list  go to state 20
+    element       go to state 21
+    optional      go to state 22
+    zeroormore    go to state 23
+    oneormore     go to state 24
+    text          go to state 25
+    id            go to state 26
+
+
+State 32
+
+   11 element_list: element element_list .
+
+    $default  reduce using rule 11 (element_list)
+
+
+State 33
+
+   17 optional: LEND alternatives REND .
+
+    $default  reduce using rule 17 (optional)
+
+
+State 34
+
+   18 zeroormore: LBRACE alternatives RBRACE .
+
+    $default  reduce using rule 18 (zeroormore)
+
+
+State 35
+
+   19 oneormore: LPAREN alternatives RPAREN .
+
+    $default  reduce using rule 19 (oneormore)
+
+
+State 36
+
+    8 alternatives: alternative BAR alternatives .
+
+    $default  reduce using rule 8 (alternatives)

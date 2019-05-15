@@ -1,0 +1,19 @@
+@@
+ID LT GT BAR REND LEND RBRACE LBRACE
+RPAREN LPAREN ASSIGN
+@@
+<id> <oneormore> <zeroormore> <optional> <element>
+<alternative> <alternatives> <rhs> <lhs> <rule_>
+<rulelist>
+@@
+<rulelist> ::= { <rule_> }
+<rule_> ::= <lhs> ASSIGN <rhs>
+<lhs> ::= <id>
+<rhs> ::= <alternatives>
+<alternatives> ::= ( <alternative> )
+<alternative> ::= { <element> }
+<element> ::= <oneormore> | <zeroormore> | <optional> | ID | <id>
+<optional> ::= LEND <alternatives> REND
+<zeroormore> ::= LBRACE <alternatives> RBRACE
+<oneormore> ::= LPAREN <alternatives> RPAREN
+<id> ::= LT ID GT

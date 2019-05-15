@@ -1,0 +1,2 @@
+((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+    (((a.b > -1 OR a.b IS NULL) OR (qq < -1 OR qq IS NULL)) and ( (mm > 10 OR mm IS NULL) OR (a.b > -1 OR a.b IS NULL)))

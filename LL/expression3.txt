@@ -1,0 +1,1 @@
+(A > 0 AND B > -1) AND (A > 1 AND B > 0)

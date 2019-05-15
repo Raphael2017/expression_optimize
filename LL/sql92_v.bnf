@@ -1,0 +1,161 @@
+@@
+<host identifier> <plus sign> <minus sign> <asterisk> <solidus> <left paren> <right paren>
+USER CURRENT_USER SESSION_USER SYSTEM_USER VALUE <colon> <identifier> INDICATOR <question mark>
+<character string literal>
+<hex string literal>
+<national character string literal>
+<bit string literal>
+@@
+<value expression>
+<numeric value expression>
+<term>
+<factor>
+<numeric primary>
+<value expression primary>
+<unsigned value specification>
+<unsigned literal>
+<general value specification>
+<parameter specification>
+<parameter name>
+<indicator parameter>
+<dynamic parameter specification>
+<variable specification>
+<embedded variable name>
+<string value expression>
+<datetime value expression>
+<interval value expression>
+<sign>
+<sign1>
+<numeric value function>
+<column reference>
+<set function specification>
+<scalar subquery>
+<case expression>
+<cast specification>
+<unsigned numeric literal>
+<general literal>
+<indicator variable>
+<datetime literal>
+<date literal>
+<interval literal>
+@@
+<value expression> ::=
+		<numeric value expression>
+	|   <string value expression>
+	|   <datetime value expression>
+	|   <interval value expression>
+
+<numeric value expression> ::=
+		<term> { <sign> <term> }
+
+<term> ::=
+		<factor> { <sign1> <factor> }
+
+<factor> ::= [ <sign> ] <numeric primary>
+
+<sign> ::= <plus sign> | <minus sign>
+<sign1> ::= <asterisk> | <solidus>
+
+<numeric primary> ::= <value expression primary> | <numeric value function>
+
+<value expression primary> ::=
+		<unsigned value specification>
+	|   <column reference>
+	|   <set function specification>
+	|   <scalar subquery>
+	|   <case expression>
+	|   <left paren> <value expression> <right paren>
+	|   <cast specification>
+
+<unsigned value specification> ::= <unsigned literal> | <general value specification>
+
+<unsigned literal> ::= <unsigned numeric literal> | <general literal>
+
+<general value specification> ::=
+		<parameter specification>
+	|   <dynamic parameter specification>
+	|   <variable specification>
+	|   USER
+	|   CURRENT_USER
+	|   SESSION_USER
+	|   SYSTEM_USER
+	|   VALUE
+
+<parameter specification> ::= <parameter name> [ <indicator parameter> ]
+
+<parameter name> ::= <colon> <identifier>
+
+<indicator parameter> ::= [ INDICATOR ] <parameter name>
+
+<dynamic parameter specification> ::= <question mark>
+
+<variable specification> ::= <embedded variable name> [ <indicator variable> ]
+
+<embedded variable name> ::= <colon><host identifier>
+
+<indicator variable> ::= [ INDICATOR ] <embedded variable name>
+
+<general literal> ::=
+		<character string literal>
+	|	<national character string literal>
+	|	<bit string literal>
+	|	<hex string literal>
+	|	<datetime literal>
+	|	<interval literal>
+
+<datetime literal> ::=
+		<date literal>
+	|	<time literal>
+	|	<timestamp literal>
+
+<date literal> ::= DATE <date string>
+
+<time literal> ::= TIME <time string>
+
+<timestamp literal> ::= TIMESTAMP <timestamp string>
+
+<interval literal> ::= INTERVAL [ <sign> ] <interval string> <interval qualifier>
+
+<datetime value function> ::=
+		<current date value function>
+	|	<current time value function>
+	|	<current timestamp value function>
+
+<current date value function> ::= CURRENT_DATE
+
+<current time value function> ::= CURRENT_TIME [ <left paren> <time precision> <right paren> ]
+
+<current timestamp value function> ::= CURRENT_TIMESTAMP [ <left paren> <timestamp precision> <right paren> ]
+
+<search condition> ::= <boolean term> { OR <boolean term> }
+
+<boolean term> ::= <boolean factor> { AND <boolean factor> }
+
+<boolean factor> ::= [ NOT ] <boolean test>
+
+<boolean test> ::= <boolean primary> [ IS [ NOT ] <truth value> ]
+
+<boolean primary> ::= <predicate> | <left paren> <search condition> <right paren>
+
+<predicate> ::=
+		<comparison predicate>
+	|   <between predicate>
+	|   <in predicate>
+	|   <like predicate>
+	|   <null predicate>
+	|   <quantified comparison predicate>
+	|   <exists predicate>
+	|   <match predicate>
+    |   <overlaps predicate>
+
+<comparison predicate> ::= <row value constructor> <comp op> <row value constructor>
+
+<row value constructor> ::=
+		<row value constructor element>
+	|   <left paren> <row value constructor list> <right paren>
+	|   <row subquery>
+
+<row value constructor element> ::=
+		<value expression>
+	|   <null specification>
+| <default specification>

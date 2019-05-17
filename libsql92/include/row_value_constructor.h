@@ -28,6 +28,8 @@ struct RowValueConstructorList {
 };
 
 RowValueConstructor *make_row_value_ctor(ILex *lex, ParseResult *pr);
+void free_row_value_ctor(RowValueConstructor *row);
+
 RowValueConstructorList *make_row_value_ctor_list(RowValueConstructor *row, RowValueConstructorList *next);
 
 

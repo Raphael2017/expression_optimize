@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string>
 #include <assert.h>
+#include <malloc.h>
+
+
 
 RowValueConstructor *make_row_value_ctor(ILex *lex, ParseResult *pr) {
     RowValueConstructor *r = new RowValueConstructor;
@@ -31,6 +34,7 @@ RowValueConstructor *make_row_value_ctor(ILex *lex, ParseResult *pr) {
             }
             else {
                 pr->error_ = PARSE_FAILED;
+                free_row_value_ctor(r);
                 return nullptr;
             }
         } break;
@@ -61,6 +65,7 @@ RowValueConstructor *make_row_value_ctor(ILex *lex, ParseResult *pr) {
                 }
                 else {
                     pr->error_ = PARSE_FAILED;
+                    free_row_value_ctor(r);
                     return nullptr;
                 }
             }
@@ -71,6 +76,34 @@ RowValueConstructor *make_row_value_ctor(ILex *lex, ParseResult *pr) {
         }
     }
     return r;
+}
+
+void free_identifier_chain(IdentifierChain *chain) {
+    if (!chain)
+        return;
+    for (IdentifierChain *it = chain; it != nullptr;) {
+        free((char*)it->identifier_);
+        it->identifier_ = nullptr;
+        IdentifierChain *n = it;
+        it = it->next_;
+        delete(n);
+        n = nullptr;
+    }
+}
+
+void free_row_value_ctor(RowValueConstructor *row) {
+    if (!row)
+        return;
+    assert(row->type_ == RowValueConstructor::COLUMN_REF ||
+            row->type_ == RowValueConstructor::INT_LIT ||
+             row->type_ == RowValueConstructor::STR_LIT);
+    switch (row->type_) {
+        case RowValueConstructor::COLUMN_REF: { free_identifier_chain(row->u.column_ref_); row->u.column_ref_ = nullptr; } break;
+        case RowValueConstructor::INT_LIT: {  } break;
+        case RowValueConstructor::STR_LIT: { free((char*)row->u.str_lit_); row->u.str_lit_ = nullptr; } break;
+        default: break;
+    }
+    delete(row);
 }
 
 void format(RowValueConstructor *A, Buf *dst) {

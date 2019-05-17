@@ -64,6 +64,7 @@ struct BooleanFactorList {
  *        | <boolean term> AND <boolean factor>
  * */
 struct BooleanTerm {
+    bool is_optimized_;
     BooleanFactorList *boolean_factors_;
 };
 
@@ -79,28 +80,17 @@ struct BooleanTermList {
  *      | <search condition> OR <boolean term>
  * */
 struct SearchCondition {
+    bool is_optimized_;
     BooleanTermList *boolean_terms_;
 };
 
 
 SearchCondition *make_search_condition(ILex *lex, ParseResult *pr);
-
-/* contains */
-/* check A contained in B */
-//bool contained(Predicate *A, BooleanTerm *B);
-bool contained(Predicate *A, SearchCondition *B);
-bool contained(BooleanTerm *A, Predicate *B);
-bool contained(BooleanTerm *A, BooleanTerm *B);
-bool contained(BooleanTerm *A, SearchCondition *B);
-bool contained(SearchCondition *A, Predicate *B);
-bool contained(SearchCondition *A, BooleanTerm *B);
-bool contained(SearchCondition *A, SearchCondition *B);
+void free_search_condition(SearchCondition *sc);
 
 void optimize(SearchCondition *A);
-void optimize(BooleanTerm *A);
 
 void format(SearchCondition *A, Buf *dst);
-void format(BooleanTerm *A, Buf *dst);
-void format(BooleanFactor *A, Buf *dst);
+
 
 #endif

@@ -18,6 +18,8 @@ ExistsPredicate *make_exists_predicate(ILex *lex, ParseResult *pr);
 MatchPredicate *make_match_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first);
 OverlapsPredicate *make_overlaps_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first);
 
+void free_comp_predicate(ComparisonPredicate*);
+
 ComparisonPredicate *make_comp_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first, TokenType op) {
     ComparisonPredicate *cp = new ComparisonPredicate;
     cp->row1_ = first;
@@ -35,6 +37,7 @@ ComparisonPredicate *make_comp_predicate(ILex *lex, ParseResult *pr, RowValueCon
     }
     RowValueConstructor *row2 = make_row_value_ctor(lex, pr);
     if (error_occur(pr)) {
+        free_comp_predicate(cp);
         return nullptr;
     }
     cp->row2_ = row2;
@@ -42,6 +45,7 @@ ComparisonPredicate *make_comp_predicate(ILex *lex, ParseResult *pr, RowValueCon
 }
 
 BetweenPredicate *make_between_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first, bool has_not) {
+    return nullptr;
     BetweenPredicate *bp = new BetweenPredicate;
     bp->row1_ = first;
     bp->is_not_ = has_not;
@@ -68,6 +72,7 @@ BetweenPredicate *make_between_predicate(ILex *lex, ParseResult *pr, RowValueCon
         pr->error_ = PARSE_FAILED;
         return nullptr;
     }
+    return bp;
 }
 
 InPredicate *make_in_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first, bool has_not) {
@@ -126,6 +131,7 @@ InPredicate *make_in_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *
 }
 
 LikePredicate *make_like_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first, bool has_not) {
+    return nullptr;
     LikePredicate *lp = new LikePredicate;
     lp->match_value_ = first;
     lp->is_not_ = has_not;
@@ -151,6 +157,8 @@ LikePredicate *make_like_predicate(ILex *lex, ParseResult *pr, RowValueConstruct
     return lp;
 }
 
+void free_null_predicate(NullPredicate *np);
+
 NullPredicate *make_null_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first) {
     NullPredicate *np = new NullPredicate;
     np->row_ = first;
@@ -168,6 +176,7 @@ NullPredicate *make_null_predicate(ILex *lex, ParseResult *pr, RowValueConstruct
         lex->next();
     }
     else {
+        free_null_predicate(np);
         pr->error_ = PARSE_FAILED;
     }
     return np;
@@ -290,6 +299,7 @@ MatchPredicate *make_match_predicate(ILex *lex, ParseResult *pr, RowValueConstru
 }
 
 OverlapsPredicate *make_overlaps_predicate(ILex *lex, ParseResult *pr, RowValueConstructor *first) {
+    return nullptr;
     OverlapsPredicate *op = new OverlapsPredicate;
     op->row1_ = first;
     op->row2_ = nullptr;
@@ -312,6 +322,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
         case EXISTS: {
             ExistsPredicate *ep = make_exists_predicate(lex, pr);
             if (error_occur(pr)) {
+                free_predicate(predicae);
                 return nullptr;
             }
             predicae->type_ = Predicate::EP;
@@ -320,6 +331,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
         default: {
             RowValueConstructor *first = make_row_value_ctor(lex, pr);
             if (error_occur(pr)) {
+                free_predicate(predicae);
                 return nullptr;
             }
             tk = lex->token();
@@ -336,17 +348,19 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                     if (tk->type() == ALL || tk->type() == SOME) {
                         QuantifiedComparisonPredicate *qcp = make_quan_comp_predicate(lex, pr, first, op);
                         if (error_occur(pr)) {
+                            free_predicate(predicae);
                             return nullptr;
                         }
                         predicae->type_ = Predicate::QCP;
                         predicae->u.qcp_ = qcp;
                     }
                     else {
+                        predicae->type_ = Predicate::CP;
                         ComparisonPredicate *cp = make_comp_predicate(lex, pr, first, op);
                         if (error_occur(pr)) {
+                            free_predicate(predicae);
                             return nullptr;
                         }
-                        predicae->type_ = Predicate::CP;
                         predicae->u.cp_ = cp;
                     }
                 } break;
@@ -357,6 +371,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                         case BETWEEN: {
                             BetweenPredicate *bp = make_between_predicate(lex, pr, first, true);
                             if (error_occur(pr)) {
+                                free_predicate(predicae);
                                 return nullptr;
                             }
                             predicae->type_ = Predicate::BP;
@@ -365,6 +380,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                         case IN: {
                             InPredicate *ip = make_in_predicate(lex, pr, first, true);
                             if (error_occur(pr)) {
+                                free_predicate(predicae);
                                 return nullptr;
                             }
                             predicae->type_ = Predicate::IP;
@@ -373,6 +389,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                         case LIKE: {
                             LikePredicate *lp = make_like_predicate(lex, pr, first, true);
                             if (error_occur(pr)) {
+                                free_predicate(predicae);
                                 return nullptr;
                             }
                             predicae->type_ = Predicate::LP;
@@ -380,6 +397,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                         } break;
                         default: {
                             pr->error_ = PARSE_FAILED;
+                            free_predicate(predicae);
                             return nullptr;
                         } break;
                     }
@@ -387,6 +405,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case BETWEEN: {
                     BetweenPredicate *bp = make_between_predicate(lex, pr, first, false);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::BP;
@@ -395,6 +414,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case IN: {
                     InPredicate *ip = make_in_predicate(lex, pr, first, false);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::IP;
@@ -403,6 +423,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case LIKE: {
                     LikePredicate *lp = make_like_predicate(lex, pr, first, false);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::LP;
@@ -411,6 +432,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case IS: {
                     NullPredicate *np = make_null_predicate(lex, pr, first);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::NP;
@@ -419,6 +441,7 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case MATCH: {
                     MatchPredicate *mp = make_match_predicate(lex, pr, first);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::MP;
@@ -427,19 +450,51 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                 case OVERLAPS: {
                     OverlapsPredicate *op = make_overlaps_predicate(lex, pr, first);
                     if (error_occur(pr)) {
+                        free_predicate(predicae);
                         return nullptr;
                     }
                     predicae->type_ = Predicate::OP;
                     predicae->u.op_ = op;
                 } break;
                 default: {
-                    predicae->type_ = Predicate::RW;
-                    predicae->u.row_ = first;
+                    pr->error_ = PARSE_FAILED;
+                    free_row_value_ctor(first);
+                    free_predicate(predicae);
+                    return nullptr;
                 } break;
             }
         } break;
     }
     return predicae;
+}
+
+void free_comp_predicate(ComparisonPredicate *cp) {
+    if (!cp)
+        return;
+    free_row_value_ctor(cp->row1_);
+    cp->row1_ = nullptr;
+    free_row_value_ctor(cp->row2_);
+    cp->row2_ = nullptr;
+    delete(cp);
+}
+
+void free_null_predicate(NullPredicate *np) {
+    if (!np)
+        return;
+    free_row_value_ctor(np->row_);
+    np->row_ = nullptr;
+    delete(np);
+}
+
+void free_predicate(Predicate *predicate) {
+    if (!predicate)
+        return;
+    switch (predicate->type_) {
+        case Predicate::CP: { free_comp_predicate(predicate->u.cp_); predicate->u.cp_ = nullptr; } break;
+        case Predicate::NP: { free_null_predicate(predicate->u.np_); predicate->u.np_ = nullptr; } break;
+        default: break;
+    }
+    delete(predicate);
 }
 
 ComparisonPredicate *to_comparison_predicate(Predicate *predicate) {
@@ -713,6 +768,171 @@ bool contained(Predicate *A, Predicate *B) {
                 } break;
                 case ComparisonPredicate::GTEQ: {
                     return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                default: assert(false);
+            }
+        } break;
+        default: assert(false);
+    }
+    return false;
+}
+
+bool mutexed(Predicate *A, Predicate *B) {
+    if (A->type_ != B->type_)
+        return false;
+    if (A->type_ == Predicate::NP) {
+        return false;
+    }
+    ComparisonPredicate *cA = to_comparison_predicate(A);
+    ComparisonPredicate *cB = to_comparison_predicate(B);
+
+    RowValueConstructor *lA = cA->row1_;
+    RowValueConstructor *rA = cA->row2_;
+    RowValueConstructor *lB = cB->row1_;
+    RowValueConstructor *rB = cB->row2_;
+
+
+    /* l is REF, r is LIT */
+    if (!is_same_ref(lA->u.column_ref_, lB->u.column_ref_))
+        return false;
+
+    /* EQ, NEQ, LT, GT, LTEQ, GTEQ  */
+    /* add predicate optimize rule here */
+    switch (cA->comp_op_) {
+        case ComparisonPredicate::EQ: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return !is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::LT: {
+                    return is_gt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GT: {
+                    return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return is_gt_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return is_lt_lit(rA, rB);
+                } break;
+                default: assert(false);
+            }
+        } break;
+        case ComparisonPredicate::NEQ: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return !is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::LT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return false;
+                } break;
+                default: assert(false);
+            }
+        } break;
+        case ComparisonPredicate::LT: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GT: {
+                    return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                default: assert(false);
+            }
+        } break;
+        case ComparisonPredicate::GT: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return is_gt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LT: {
+                    return is_gt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return is_gt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return false;
+                } break;
+                default: assert(false);
+            }
+        } break;
+        case ComparisonPredicate::LTEQ: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return is_lt_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GT: {
+                    return is_lt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return is_lt_lit(rA, rB);
+                } break;
+                default: assert(false);
+            }
+        } break;
+        case ComparisonPredicate::GTEQ: {
+            switch (cB->comp_op_) {
+                case ComparisonPredicate::EQ: {
+                    return is_gt_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::NEQ: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LT: {
+                    return is_gt_lit(rA, rB) || is_same_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GT: {
+                    return false;
+                } break;
+                case ComparisonPredicate::LTEQ: {
+                    return is_gt_lit(rA, rB);
+                } break;
+                case ComparisonPredicate::GTEQ: {
+                    return false;
                 } break;
                 default: assert(false);
             }

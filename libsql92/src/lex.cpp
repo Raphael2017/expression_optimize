@@ -46,6 +46,16 @@ struct Lex : public ILex {
             case ';': { cur_tk_ = Token(SEMI, ";"); pos_inc(1); } break;
             case '?': { cur_tk_ = Token(QUES, "?"); pos_inc(1); } break;
             case '=': { cur_tk_ = Token(EQ, "="); pos_inc(1); } break;
+            case '!': {
+                pos_inc(1);
+                if (char_at(pos()) == '=') {
+                    cur_tk_ = Token(LTGT, "!=");
+                    pos_inc(1);
+                }
+                else {
+                    cur_tk_ = Token(ERR, "EXPECTED '!='");
+                }
+            } break;
             case '>': {
                 pos_inc(1);
                 if (char_at(pos()) == '=') {
@@ -354,6 +364,7 @@ void Lex::scanf() {
             case '=':
             case '>':
             case '<':
+            case '!':
             case '|': {
                 if ('.' == char_at(pos()) && is_dec_body(char_at(pos()+1)))
                     return scanf_number();
@@ -419,7 +430,7 @@ void Lex::single_line_comment() {
 }
 
 void Lex::multi_line_comment() {
-    pos_inc(2);  /* skip /* */
+    pos_inc(2);  /* skip */
     char c1 = char_at(pos()), c2 = char_at(pos()+1);
     while (c1 != EOI && c2 != EOI) {
         if (c1 == '*' && c2 == '/')
@@ -437,4 +448,8 @@ void Lex::multi_line_comment() {
 
 ILex *make_lex(const char *sql) {
     return new Lex(sql);
+}
+
+void free_lex(ILex *lex) {
+    delete(lex);
 }

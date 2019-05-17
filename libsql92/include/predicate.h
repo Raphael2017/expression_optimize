@@ -17,6 +17,7 @@ struct MatchPredicate;
 struct OverlapsPredicate;
 struct Predicate;
 struct Buf;
+struct RowValueConstructorList;
 
 /*
  * <comparison predicate> ::= <row value constructor> <comp op> <row value constructor>
@@ -126,10 +127,14 @@ struct Predicate {
 };
 
 Predicate *make_predicate(ILex *lex, ParseResult *pr);
+void free_predicate(Predicate *predicate);
 
-/* contains */
+/* contained */
 /* check A contained in B */
 bool contained(Predicate *A, Predicate *B);
+
+
+bool mutexed(Predicate *A, Predicate *B);
 
 void format(Predicate *A, Buf *dst);
 

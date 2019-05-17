@@ -70,5 +70,6 @@ struct ILex {
 };
 
 ILex *make_lex(const char *sql);
+void free_lex(ILex *lex);
 
 #endif

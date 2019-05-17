@@ -16,18 +16,41 @@ std::string readFileContents(const std::string& file_path)
     return text;
 }
 
+int fun_(const std::string& sql);
 int main() {
+    std::string sql = readFileContents("/home/qwerty/CLionProjects/expression_optimize/LL/expression1.txt");
+    clock_t start, finish;
+    double duration;
+    {
+        start = clock();
+        fun_(sql);
+        finish = clock();
+        duration = (double)(finish - start) / CLOCKS_PER_SEC;
+        printf( "%f seconds\n", duration );
+    }
 
-    std::string sql = readFileContents("/home/uiop/CLionProjects/sql92/LL/expression3.txt");
+};
+
+int fun_(const std::string& sql) {
+
+
     ILex *lex = make_lex(sql.c_str());
     lex->next();
     ParseResult pr;
     pr.error_ = PARSE_SUCCESS;
 
     SearchCondition * s = make_search_condition(lex, &pr);
+    if (error_occur(&pr)) {
+        free_lex(lex);
+        return 0;
+    }
     optimize(s);
     Buf buf;
     format(s, &buf);
-    printf("%s", buf.str_.c_str());
+    free_search_condition(s);
+    s = nullptr;
+    free_lex(lex);
+    lex = nullptr;
+    printf("%s\n", buf.str_.c_str());
     return 0;
 }

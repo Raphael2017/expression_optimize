@@ -6,8 +6,34 @@
 #include <search_condition.h>
 #include "row_value_constructor.h"
 
+/* contained */
+/* check A contained in B */
+bool contained(Predicate *A, BooleanTerm *B);
+bool contained(Predicate *A, SearchCondition *B);
+bool contained(BooleanTerm *A, Predicate *B);
+bool contained(BooleanTerm *A, BooleanTerm *B);
+bool contained(BooleanTerm *A, SearchCondition *B);
+bool contained(SearchCondition *A, Predicate *B);
+bool contained(SearchCondition *A, BooleanTerm *B);
+bool contained(SearchCondition *A, SearchCondition *B);
+
+/* mutexed */
+bool mutexed(Predicate *A, BooleanTerm *B);
+bool mutexed(Predicate *A, SearchCondition *B);
+bool mutexed(BooleanTerm *A, Predicate *B);
+bool mutexed(BooleanTerm *A, BooleanTerm *B);
+bool mutexed(BooleanTerm *A, SearchCondition *B);
+bool mutexed(SearchCondition *A, Predicate *B);
+bool mutexed(SearchCondition *A, BooleanTerm *B);
+bool mutexed(SearchCondition *A, SearchCondition *B);
+
+
+void optimize(BooleanTerm *A);
+void format(BooleanTerm *A, Buf *dst);
 BooleanTerm *bt(BooleanTerm *A);
 SearchCondition *sc(SearchCondition *A);
+BooleanTermList *effective_next(BooleanTermList *i);
+BooleanFactorList *effective_next(BooleanFactorList *i);
 
 bool error_occur(ParseResult *pr) { return pr->error_ != 0; }
 
@@ -27,13 +53,17 @@ BooleanFactorList *make_boolean_factor_list(BooleanFactor *factor, BooleanFactor
     return r;
 }
 
+void free_booleanprimary(BooleanPrimary *primary);
 BooleanPrimary *make_boolean_primary(ILex *lex, ParseResult *pr) {
     BooleanPrimary *boolean_primary = new BooleanPrimary;
+    boolean_primary->type_ = BooleanPrimary::PRE;
+    boolean_primary->u.predicate_ = nullptr;
     IToken *tk = lex->token();
     if (tk->type() == LPAREN) {
         lex->next();
         SearchCondition *s = make_search_condition(lex, pr);
         if (error_occur(pr)) {
+            free_booleanprimary(boolean_primary);
             return nullptr;
         }
         boolean_primary->type_ = BooleanPrimary::SEARCH;
@@ -44,12 +74,14 @@ BooleanPrimary *make_boolean_primary(ILex *lex, ParseResult *pr) {
         }
         else {
             pr->error_ = PARSE_FAILED;
+            free_booleanprimary(boolean_primary);
             return nullptr;
         }
     }
     else {
         Predicate *p = make_predicate(lex, pr);
         if (error_occur(pr)) {
+            free_booleanprimary(boolean_primary);
             return nullptr;
         }
         else {
@@ -60,6 +92,7 @@ BooleanPrimary *make_boolean_primary(ILex *lex, ParseResult *pr) {
     return boolean_primary;
 }
 
+void free_booleantest(BooleanTest *test);
 BooleanTest *make_boolean_test(ILex *lex, ParseResult *pr) {
     BooleanTest *boolean_test = new BooleanTest;
     boolean_test->primary_ = nullptr;
@@ -67,6 +100,7 @@ BooleanTest *make_boolean_test(ILex *lex, ParseResult *pr) {
     boolean_test->is_ = false;
     BooleanPrimary *primary = make_boolean_primary(lex, pr);
     if (error_occur(pr)) {
+        free_booleantest(boolean_test);
         return nullptr;
     }
     boolean_test->primary_ = primary;
@@ -87,6 +121,7 @@ BooleanTest *make_boolean_test(ILex *lex, ParseResult *pr) {
             case UNKNOWN: { boolean_test->truth_value_ = BooleanTest::UNKNOWN; } break;
             default: {
                 pr->error_ = PARSE_FAILED;
+                free_booleantest(boolean_test);
                 return nullptr;
             } break;
         }
@@ -94,6 +129,7 @@ BooleanTest *make_boolean_test(ILex *lex, ParseResult *pr) {
     return boolean_test;
 }
 
+void free_booleanfactor(BooleanFactor *factor);
 BooleanFactor *make_boolean_factor(ILex *lex, ParseResult *pr) {
     BooleanFactor *boolean_factor = new BooleanFactor;
     boolean_factor->is_not_ = false;
@@ -104,6 +140,7 @@ BooleanFactor *make_boolean_factor(ILex *lex, ParseResult *pr) {
         lex->next();
         BooleanFactor *f = make_boolean_factor(lex, pr);
         if (error_occur(pr)) {
+            free_booleanfactor(boolean_factor);
             return nullptr;
         }
         boolean_factor->u.factor_ = f;
@@ -112,6 +149,7 @@ BooleanFactor *make_boolean_factor(ILex *lex, ParseResult *pr) {
         boolean_factor->is_not_ = false;
         BooleanTest *test = make_boolean_test(lex, pr);
         if (error_occur(pr)) {
+            free_booleanfactor(boolean_factor);
             return nullptr;
         }
         boolean_factor->u.test_ = test;
@@ -119,11 +157,14 @@ BooleanFactor *make_boolean_factor(ILex *lex, ParseResult *pr) {
     return boolean_factor;
 }
 
+void free_booleanterm(BooleanTerm *term);
 BooleanTerm *make_boolean_term(ILex *lex, ParseResult *pr) {
     BooleanTerm *boolean_term = new BooleanTerm;
+    boolean_term->is_optimized_ = false;
     boolean_term->boolean_factors_ = nullptr;
     BooleanFactor *factor = make_boolean_factor(lex, pr);
     if (error_occur(pr)) {
+        free_booleanterm(boolean_term);
         return nullptr;
     }
     boolean_term->boolean_factors_ = make_boolean_factor_list(factor, nullptr);
@@ -133,6 +174,7 @@ BooleanTerm *make_boolean_term(ILex *lex, ParseResult *pr) {
         lex->next();
         factor = make_boolean_factor(lex, pr);
         if (error_occur(pr)) {
+            free_booleanterm(boolean_term);
             return nullptr;
         }
         tail->next_ = make_boolean_factor_list(factor, nullptr);
@@ -143,9 +185,11 @@ BooleanTerm *make_boolean_term(ILex *lex, ParseResult *pr) {
 
 SearchCondition *make_search_condition(ILex *lex, ParseResult *pr) {
     SearchCondition *search_condition = new SearchCondition;
+    search_condition->is_optimized_ = false;
     search_condition->boolean_terms_ = nullptr;
     BooleanTerm *term = make_boolean_term(lex, pr);
     if (error_occur(pr)) {
+        free_search_condition(search_condition);
         return nullptr;
     }
     search_condition->boolean_terms_ = make_boolean_term_list(term, nullptr);
@@ -155,12 +199,80 @@ SearchCondition *make_search_condition(ILex *lex, ParseResult *pr) {
         lex->next();
         term = make_boolean_term(lex, pr);
         if (error_occur(pr)) {
+            free_search_condition(search_condition);
             return nullptr;
         }
         tail->next_ = make_boolean_term_list(term, nullptr);
         tail = tail->next_;
     }
     return search_condition;
+}
+
+void free_booleanprimary(BooleanPrimary *primary) {
+    if (!primary)
+        return;
+    switch (primary->type_) {
+        case BooleanPrimary::PRE: { free_predicate(primary->u.predicate_); primary->u.predicate_ = nullptr; } break;
+        case BooleanPrimary::SEARCH: { free_search_condition(primary->u.search_); primary->u.search_ = nullptr; } break;
+        default: break;
+    }
+    delete(primary);
+}
+
+void free_booleantest(BooleanTest *test) {
+    if (!test)
+        return;
+    assert(test->is_ == false);
+    free_booleanprimary(test->primary_);
+    test->primary_ = nullptr;
+    delete(test);
+}
+
+void free_booleanfactor(BooleanFactor *factor) {
+    if (!factor)
+        return;
+    assert(factor->is_not_ == false);
+    free_booleantest(factor->u.test_);
+    factor->u.test_ = nullptr;
+    delete(factor);
+}
+
+void free_booleanfactor_list(BooleanFactorList *list) {
+    if (!list)
+        return;
+    for (BooleanFactorList *it = list; it != nullptr; ) {
+        BooleanFactorList *n = it;
+        free_booleanfactor(it->factor_);
+        it->factor_ = nullptr;
+        it = it->next_;
+        delete(n);
+    }
+}
+void free_booleanterm(BooleanTerm *term) {
+    if (!term)
+        return;
+    free_booleanfactor_list(term->boolean_factors_);
+    term->boolean_factors_ = nullptr;
+    delete(term);
+}
+void free_booleanterm_list(BooleanTermList *list) {
+    if (!list)
+        return;
+    for (BooleanTermList *it = list; it != nullptr;) {
+        BooleanTermList *n = it;
+        free_booleanterm(n->term_);
+        n->term_ = nullptr;
+        it = it->next_;
+        delete(n);
+    }
+}
+
+void free_search_condition(SearchCondition *sc) {
+    if (!sc)
+        return;
+    free_booleanterm_list(sc->boolean_terms_);
+    sc->boolean_terms_ = nullptr;
+    delete(sc);
 }
 
 /* contains */
@@ -176,7 +288,7 @@ BooleanPrimary *booleanfactor2primary(BooleanFactor *factor) {
 
 bool contained(Predicate *A, BooleanTerm *B) {
     B = bt(B);
-    for (BooleanFactorList *it = B->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(B->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         switch (primary->type_) {
             case BooleanPrimary::PRE: {
@@ -195,7 +307,7 @@ bool contained(Predicate *A, BooleanTerm *B) {
 
 bool contained(Predicate *A, SearchCondition *B) {
     B = sc(B);
-    for (BooleanTermList *it = B->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         BooleanTerm *term = it->term_;
         if (contained(A, term))
             return true;
@@ -205,7 +317,7 @@ bool contained(Predicate *A, SearchCondition *B) {
 
 bool contained(BooleanTerm *A, Predicate *B) {
     A = bt(A);
-    for (BooleanFactorList *it = A->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         switch (primary->type_) {
             case BooleanPrimary::PRE: {
@@ -225,7 +337,7 @@ bool contained(BooleanTerm *A, Predicate *B) {
 bool contained(BooleanTerm *A, BooleanTerm *B) {
     A = bt(A); B = bt(B);
     bool ret = false;
-    for (BooleanFactorList *it = A->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         switch (primary->type_) {
             case BooleanPrimary::PRE: {
@@ -241,7 +353,7 @@ bool contained(BooleanTerm *A, BooleanTerm *B) {
     }
 
     ret = true;
-    for (BooleanFactorList *it = B->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(B->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         switch (primary->type_) {
             case BooleanPrimary::PRE: {
@@ -261,7 +373,7 @@ bool contained(BooleanTerm *A, BooleanTerm *B) {
 bool contained(BooleanTerm *A, SearchCondition *B) {
     A = bt(A); B = sc(B);
     bool ret = false;
-    for (BooleanFactorList *it = A->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         switch (primary->type_) {
             case BooleanPrimary::PRE: {
@@ -276,7 +388,7 @@ bool contained(BooleanTerm *A, SearchCondition *B) {
         }
     }
 
-    for (BooleanTermList *it = B->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         if (contained(A, it->term_))
             return true;
     }
@@ -286,7 +398,7 @@ bool contained(BooleanTerm *A, SearchCondition *B) {
 
 bool contained(SearchCondition *A, Predicate *B) {
     A = sc(A);
-    for (BooleanTermList *it = A->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(A->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         BooleanTerm *term = it->term_;
         if (!contained(term, B))
             return false;
@@ -297,7 +409,7 @@ bool contained(SearchCondition *A, Predicate *B) {
 bool contained(SearchCondition *A, BooleanTerm *B) {
     A = sc(A); B = bt(B);
     bool ret = true;
-    for (BooleanTermList *it = A->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(A->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         BooleanTerm *term = it->term_;
         if (!contained(term, B)) {
             ret = false;
@@ -306,7 +418,7 @@ bool contained(SearchCondition *A, BooleanTerm *B) {
     }
     if (ret)
         return true;
-    for (BooleanFactorList *it = B->boolean_factors_; it != nullptr; it = it->next_) {
+    for (BooleanFactorList *it = effective_next(B->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
         BooleanPrimary *p = booleanfactor2primary(it->factor_);
         switch (p->type_) {
             case BooleanPrimary::PRE: {
@@ -326,7 +438,7 @@ bool contained(SearchCondition *A, BooleanTerm *B) {
 bool contained(SearchCondition *A, SearchCondition *B) {
     A = sc(A); B = sc(B);
     bool ret = true;
-    for (BooleanTermList *it = A->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(A->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         BooleanTerm *term = it->term_;
         if (!contained(term, B)) {
             ret = false;
@@ -336,7 +448,7 @@ bool contained(SearchCondition *A, SearchCondition *B) {
     if (ret)
         return ret;
     ret = false;
-    for (BooleanTermList *it = B->boolean_terms_; it != nullptr; it = it->next_) {
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
         if (contained(A, it->term_)) {
             ret = true;
             break;
@@ -345,8 +457,128 @@ bool contained(SearchCondition *A, SearchCondition *B) {
     return ret;
 }
 
+bool mutexed(Predicate *A, BooleanTerm *B) {
+    if (B->is_optimized_)
+        return true;
+    else {
+        for (BooleanFactorList *it = effective_next(B->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
+            BooleanPrimary *primary = booleanfactor2primary(it->factor_);
+            switch (primary->type_) {
+                case BooleanPrimary::PRE: {
+                    if (mutexed(A, primary->u.predicate_))
+                        return true;
+                } break;
+                case BooleanPrimary::SEARCH: {
+                    if (mutexed(A, primary->u.search_))
+                        return true;
+                } break;
+                default: assert(false);
+            }
+        }
+        return false;
+    }
+}
+
+bool mutexed(Predicate *A, SearchCondition *B) {
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
+        if (!mutexed(A, it->term_))
+            return false;
+    }
+    return true;
+}
+
+bool mutexed(BooleanTerm *A, Predicate *B) {
+    return mutexed(B, A);
+}
+
+bool mutexed(BooleanTerm *A, BooleanTerm *B) {
+    if (A->is_optimized_ || B->is_optimized_)
+        return true;
+    for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
+        BooleanPrimary *primary = booleanfactor2primary(it->factor_);
+        switch (primary->type_) {
+            case BooleanPrimary::PRE: {
+                if (mutexed(primary->u.predicate_, B))
+                    return true;
+            } break;
+            case BooleanPrimary::SEARCH: {
+                if (mutexed(primary->u.search_, B))
+                    return true;
+            } break;
+            default: assert(false);
+        }
+    }
+
+    for (BooleanFactorList *it = effective_next(B->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
+        BooleanPrimary *primary = booleanfactor2primary(it->factor_);
+        switch (primary->type_) {
+            case BooleanPrimary::PRE: {
+                if (mutexed(A, primary->u.predicate_))
+                    return true;
+            } break;
+            case BooleanPrimary::SEARCH: {
+                if (mutexed(A, primary->u.search_))
+                    return true;
+            } break;
+            default: assert(false);
+        }
+    }
+    return false;
+}
+
+bool mutexed(BooleanTerm *A, SearchCondition *B) {
+    if (A->is_optimized_)
+        return true;
+    for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; it = effective_next(it->next_)) {
+        BooleanPrimary *primary = booleanfactor2primary(it->factor_);
+        switch (primary->type_) {
+            case BooleanPrimary::PRE: {
+                if (mutexed(primary->u.predicate_, B))
+                    return true;
+            } break;
+            case BooleanPrimary::SEARCH: {
+                if (mutexed(primary->u.search_, B))
+                    return true;
+            } break;
+            default: assert(false);
+        }
+    }
+
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
+        if (!mutexed(A, it->term_))
+            return false;
+    }
+    return true;
+}
+
+bool mutexed(SearchCondition *A, Predicate *B) {
+    return mutexed(B, A);
+}
+
+bool mutexed(SearchCondition *A, BooleanTerm *B) {
+    return mutexed(B, A);
+}
+
+bool mutexed(SearchCondition *A, SearchCondition *B) {
+    bool ret = true;
+    for (BooleanTermList *it = effective_next(A->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
+        if (!mutexed(it->term_, B)) {
+            ret = false;
+            break;
+        }
+    }
+    if (ret)
+        return true;
+    for (BooleanTermList *it = effective_next(B->boolean_terms_); it != nullptr; it = effective_next(it->next_)) {
+        if (!mutexed(A, it->term_))
+            return false;
+    }
+    return true;
+}
+
+
 void optimize(SearchCondition *A) {
-    A = sc(A);
+    //A = sc(A);
     for (BooleanTermList *it = A->boolean_terms_; it != nullptr; it = it->next_) {
         optimize(it->term_);
     }
@@ -369,7 +601,7 @@ void optimize(SearchCondition *A) {
 }
 
 void optimize(BooleanTerm *A) {
-    A = bt(A);
+    //A = bt(A);
     for (BooleanFactorList *it = A->boolean_factors_; it != nullptr; it = it->next_) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         if (primary->type_ == BooleanPrimary::SEARCH) {
@@ -383,15 +615,23 @@ void optimize(BooleanTerm *A) {
             BooleanPrimary *p1 = booleanfactor2primary(it1->factor_);
             BooleanPrimary *p2 = booleanfactor2primary(it2->factor_);
             if (p1->type_ == BooleanPrimary::SEARCH && p2->type_ == BooleanPrimary::SEARCH) {
+                if (mutexed(p1->u.search_, p2->u.search_))
+                    A->is_optimized_ = true;
                 is_con = contained(p1->u.search_, p2->u.search_);
             }
             else if (p1->type_ == BooleanPrimary::SEARCH && p2->type_ == BooleanPrimary::PRE) {
+                if (mutexed(p1->u.search_, p2->u.predicate_))
+                    A->is_optimized_ = true;
                 is_con = contained(p1->u.search_, p2->u.predicate_);
             }
             else if (p1->type_ == BooleanPrimary::PRE && p2->type_ == BooleanPrimary::SEARCH) {
+                if (mutexed(p1->u.predicate_, p2->u.search_))
+                    A->is_optimized_ = true;
                 is_con = contained(p1->u.predicate_, p2->u.search_);
             }
             else {
+                if (mutexed(p1->u.predicate_, p2->u.predicate_))
+                    A->is_optimized_ = true;
                 is_con = contained(p1->u.predicate_, p2->u.predicate_);
             }
             if (is_con) {
@@ -511,6 +751,10 @@ BooleanTerm *bt(BooleanTerm *A) {
 }
 
 void format(BooleanTerm *A, Buf *dst) {
+    if (A->is_optimized_) {
+        dst->append("1 = 0");
+        return;
+    }
     bool paren_flag = check_term(A);
     int i = 0;
     for (BooleanFactorList *it = effective_next(A->boolean_factors_); it != nullptr; ++i) {
@@ -520,9 +764,10 @@ void format(BooleanTerm *A, Buf *dst) {
         }
         else {
             /* first primary and without OR */
+            bool flag1 = false;
             if (paren_flag ) {
                 if (i == 0) {
-                    if (check_search_condition(sc(p->u.search_))) {
+                    if ((flag1 = check_search_condition(sc(p->u.search_)))) {
                         dst->append("(");
                     }
                 }
@@ -533,7 +778,7 @@ void format(BooleanTerm *A, Buf *dst) {
             format(p->u.search_, dst);
             if (paren_flag ) {
                 if (i == 0) {
-                    if (check_search_condition(sc(p->u.search_))) {
+                    if (flag1) {
                         dst->append(")");
                     }
                 }
@@ -550,6 +795,3 @@ void format(BooleanTerm *A, Buf *dst) {
     }
 }
 
-void format(BooleanFactor *A, Buf *dst) {
-
-}

@@ -1,6 +1,7 @@
 #ifndef SEARCH_CONDITION_H
 #define SEARCH_CONDITION_H
 
+
 struct ParseResult;
 struct ILex;
 struct Predicate;
@@ -92,5 +93,8 @@ void optimize(SearchCondition *A);
 
 void format(SearchCondition *A, Buf *dst);
 
+bool check_search_condition(SearchCondition *A);
+SearchCondition *sc(SearchCondition *A);
 
+BooleanPrimary *booleanfactor2primary(BooleanFactor *factor);
 #endif

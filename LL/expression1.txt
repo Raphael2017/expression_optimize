@@ -1,1 +1,1 @@
-((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) AND ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))
+((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) OR ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))

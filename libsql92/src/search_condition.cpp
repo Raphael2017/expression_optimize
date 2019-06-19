@@ -31,11 +31,8 @@ bool mutexed(SearchCondition *A, SearchCondition *B);
 void optimize(BooleanTerm *A);
 void format(BooleanTerm *A, Buf *dst);
 BooleanTerm *bt(BooleanTerm *A);
-SearchCondition *sc(SearchCondition *A);
 BooleanTermList *effective_next(BooleanTermList *i);
 BooleanFactorList *effective_next(BooleanFactorList *i);
-
-bool error_occur(ParseResult *pr) { return pr->error_ != 0; }
 
 BooleanTermList *make_boolean_term_list(BooleanTerm *term, BooleanTermList *list) {
     BooleanTermList *r = new BooleanTermList;
@@ -73,7 +70,11 @@ BooleanPrimary *make_boolean_primary(ILex *lex, ParseResult *pr) {
             lex->next();
         }
         else {
-            pr->error_ = PARSE_FAILED;
+            char ss[256] = { 0 };
+            sprintf(ss, "unexpected %s at line: %d, col: %d expect %s here",
+                    lex->get_token_type_name(tk->type()).c_str(), lex->cur_pos_line(), lex->cur_pos_col(),
+                    lex->get_token_type_name(RPAREN).c_str());
+            pr->fill_error(PARSE_FAILED, ss);
             free_booleanprimary(boolean_primary);
             return nullptr;
         }
@@ -120,7 +121,10 @@ BooleanTest *make_boolean_test(ILex *lex, ParseResult *pr) {
             case FALSE: { boolean_test->truth_value_ = BooleanTest::FALSE; } break;
             case UNKNOWN: { boolean_test->truth_value_ = BooleanTest::UNKNOWN; } break;
             default: {
-                pr->error_ = PARSE_FAILED;
+                char ss[256] = { 0 };
+                sprintf(ss, "unexpected %s at line: %d, col: %d",
+                        lex->get_token_type_name(tk->type()).c_str(), lex->cur_pos_line(), lex->cur_pos_col());
+                pr->fill_error(PARSE_FAILED, ss);
                 free_booleantest(boolean_test);
                 return nullptr;
             } break;
@@ -578,7 +582,7 @@ bool mutexed(SearchCondition *A, SearchCondition *B) {
 
 
 void optimize(SearchCondition *A) {
-    //A = sc(A);
+    A = sc(A);
     for (BooleanTermList *it = A->boolean_terms_; it != nullptr; it = it->next_) {
         optimize(it->term_);
     }
@@ -601,7 +605,7 @@ void optimize(SearchCondition *A) {
 }
 
 void optimize(BooleanTerm *A) {
-    //A = bt(A);
+    A = bt(A);
     for (BooleanFactorList *it = A->boolean_factors_; it != nullptr; it = it->next_) {
         BooleanPrimary *primary = booleanfactor2primary(it->factor_);
         if (primary->type_ == BooleanPrimary::SEARCH) {
@@ -615,23 +619,23 @@ void optimize(BooleanTerm *A) {
             BooleanPrimary *p1 = booleanfactor2primary(it1->factor_);
             BooleanPrimary *p2 = booleanfactor2primary(it2->factor_);
             if (p1->type_ == BooleanPrimary::SEARCH && p2->type_ == BooleanPrimary::SEARCH) {
-                if (mutexed(p1->u.search_, p2->u.search_))
-                    A->is_optimized_ = true;
+                //if (mutexed(p1->u.search_, p2->u.search_))
+                //    A->is_optimized_ = true;
                 is_con = contained(p1->u.search_, p2->u.search_);
             }
             else if (p1->type_ == BooleanPrimary::SEARCH && p2->type_ == BooleanPrimary::PRE) {
-                if (mutexed(p1->u.search_, p2->u.predicate_))
-                    A->is_optimized_ = true;
+                //if (mutexed(p1->u.search_, p2->u.predicate_))
+                //    A->is_optimized_ = true;
                 is_con = contained(p1->u.search_, p2->u.predicate_);
             }
             else if (p1->type_ == BooleanPrimary::PRE && p2->type_ == BooleanPrimary::SEARCH) {
-                if (mutexed(p1->u.predicate_, p2->u.search_))
-                    A->is_optimized_ = true;
+                //if (mutexed(p1->u.predicate_, p2->u.search_))
+                //    A->is_optimized_ = true;
                 is_con = contained(p1->u.predicate_, p2->u.search_);
             }
             else {
-                if (mutexed(p1->u.predicate_, p2->u.predicate_))
-                    A->is_optimized_ = true;
+                //if (mutexed(p1->u.predicate_, p2->u.predicate_))
+                //    A->is_optimized_ = true;
                 is_con = contained(p1->u.predicate_, p2->u.predicate_);
             }
             if (is_con) {

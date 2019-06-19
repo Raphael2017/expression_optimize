@@ -3,16 +3,20 @@
 #include <assert.h>
 #include <map>
 #include <algorithm>
+#include <sstream>
 
 #define EOI (-1)
 
 struct Token : public IToken {
     Token();
-    Token(TokenType tp, const std::string& word) : type_(tp), word_(word) {}
+    Token(TokenType tp, const std::string& word) : type_(tp), word_(word), word1_(word) {}
+    Token(TokenType tp, const std::string& word, const std::string& word1) : type_(tp), word_(word), word1_(word1) {}
     virtual TokenType type() const override { return type_; }
     virtual const char *word() const override { return word_.c_str(); }
+    virtual const char *word_semantic() const override { return word1_.c_str(); }
     TokenType type_;
-    std::string word_;
+    std::string word_;  // for lex
+    std::string word1_; // for semantic
 };
 
 struct Lex : public ILex {
@@ -22,7 +26,11 @@ struct Lex : public ILex {
     virtual unsigned int cur_pos_line() const override { return line_; }
     virtual unsigned int cur_pos_col() const override { return col_; }
     virtual unsigned int cur_pos() const override { return pos_; }
-
+    virtual const std::string& get_token_type_name(TokenType token_type) const override {
+        auto f = keyword1_.find(token_type);
+        assert(f != keyword1_.end());
+        return f->second;
+    }
 
 
     void scanf();
@@ -103,14 +111,23 @@ struct Lex : public ILex {
         assert(char_at(pos()) == '\'');
         pos_inc(1);
         char c = char_at(pos());
+        std::stringstream buf{};
         while (c != EOI) {
-            if (c == '\'')
-                break;
+            if (c == '\'') {
+                if (char_at(pos()+1) == '\'') {
+                    buf << '\'';
+                    pos_inc(1);
+                }
+                else
+                    break;
+            }
+            else
+                buf << c;
             c = char_at(pos_inc(1));
         }
         if (c == '\'') {
             pos_inc(1);
-            cur_tk_ = Token(STR_LITERAL, sub(start, pos()));
+            cur_tk_ = Token(STR_LITERAL, sub(start, pos()), buf.str());
         }
         else
             cur_tk_ = Token(ERR, "UNTERMINATED STRING LITERAL");
@@ -123,14 +140,23 @@ struct Lex : public ILex {
             case '"': {
                 pos_inc(1);
                 c = char_at(pos());
+                std::stringstream buf{};
                 while (c != EOI) {
-                    if (c == '"')
-                        break;
+                    if (c == '"') {
+                        if (char_at(pos()+1) == '"') {
+                            buf << '"';
+                            pos_inc(1);
+                        }
+                        else
+                            break;
+                    }
+                    else
+                        buf << c;
                     c = char_at(pos_inc(1));
                 }
                 if (c == '"') {
                     pos_inc(1);
-                    cur_tk_ = Token(ID, sub(start, pos()));
+                    cur_tk_ = Token(ID, sub(start, pos()), buf.str());
                 }
                 else
                     cur_tk_ = Token(ERR, "IDENTIFIER WITH UNTERMINATED \"");
@@ -138,19 +164,26 @@ struct Lex : public ILex {
             case '[': {
                 pos_inc(1);
                 c = char_at(pos());
+                std::stringstream buf{};
                 while (c != EOI) {
-                    if (c == ']')
-                        break;
+                    if (c == ']') {
+                        if (char_at(pos()+1) == ']') {
+                            buf << ']';
+                            pos_inc(1);
+                        }
+                        else
+                            break;
+                    }
+                    else
+                        buf << c;
                     c = char_at(pos_inc(1));
                 }
                 if (c == ']') {
                     pos_inc(1);
-                    cur_tk_ = Token(ID, sub(start, pos()));
+                    cur_tk_ = Token(ID, sub(start, pos()), buf.str());
                 }
                 else
                     cur_tk_ = Token(ERR, "IDENTIFIER WITH UNTERMINATED [");
-
-                /* check */
             } break;
             default: {
                 if (is_identifier_begin(c)) {
@@ -297,7 +330,7 @@ struct Lex : public ILex {
     unsigned int line_;
     unsigned int col_;
     std::map<std::string, TokenType > keyword_;
-
+    std::map<TokenType, std::string> keyword1_;
 };
 
 Token::Token() : type_(none) {}
@@ -326,7 +359,24 @@ Lex::Lex(const char *sql) : sql_(sql), pos_(0), line_(0), col_(0), keyword_{
         {"UNION", UNION}, {"UNIQUE", UNIQUE}, {"UNKNOWN", UNKNOWN}, {"UPDATE", UPDATE},
         {"VALUES", VALUES},
         {"WHEN", WHEN}, {"WHERE", WHERE}, {"WITH", WITH}
-} {}
+} {
+    keyword1_.clear();
+    for (auto it : keyword_)
+        keyword1_[it.second] = it.first;
+    keyword1_[none] = "none"; keyword1_[CARET] = "^";
+    keyword1_[PERCENT] = "%"; keyword1_[PLUS] = "+";
+    keyword1_[MINUS] = "-"; keyword1_[STAR] = "*";
+    keyword1_[DIVIDE] = "/"; keyword1_[DOT] = ".";
+    keyword1_[LPAREN] = "("; keyword1_[RPAREN] = ")";
+    keyword1_[COMMA] = ","; keyword1_[SEMI] = ";";
+    keyword1_[QUES] = "?"; keyword1_[EQ] = "=";
+    keyword1_[GT] = ">"; keyword1_[LT] = "<";
+    keyword1_[BARBAR] = "||"; keyword1_[GTEQ] = ">=";
+    keyword1_[LTEQ] = "<="; keyword1_[LTGT] = "<>";
+    keyword1_[STR_LITERAL] = "STR_LITERAL"; keyword1_[ID] = "ID";
+    keyword1_[NUMBER] = "NUMBER"; keyword1_[ERR] = "LEX_ERROR";
+    keyword1_[END_P] = "END_P";
+}
 
 void Lex::scanf() {
     if (cur_tk_.type_ == ERR || cur_tk_.type_ == END_P) return;

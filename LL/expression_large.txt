@@ -1,0 +1,25 @@
+(A > 0 AND B < 1) AND ((B > 1 OR A < -1) AND (C < -1 OR A > -1)) OR ((m > 0 OR m > 2) AND (N > 1 OR m > 3)) OR ((m > 0 OR m > 2) AND (N > 1 OR m != 3))
+  AND ((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) AND ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))
+  AND ((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+          (((a.b > -1 OR a.b IS NULL) OR (qq < 0 OR qq IS NULL)) and ( (mm <> 10 OR mm IS NULL) AND (a.c > -1 OR a.b IS NULL)))
+      OR  (A > 0 AND B < 1) AND ((B > 1 OR A < -1) AND (C < -1 OR A > -1)) OR ((m > 0 AND m > 2) AND (N > 1 OR m > 3)) OR ((m > 0 OR m > 2) AND (N > 1 OR m != 3))
+            AND ((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) AND ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))
+            AND ((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+                    (((a.b > -1 OR a.b IS NULL) OR (qq < 0 OR qq IS NULL)) and ( (mm <> 11 OR mm IS NULL) AND (a.c > -1 OR a.b IS NULL)))
+
+                    OR ((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+                           (((a.b > -1 OR a.b IS NULL) OR (qq < -1 OR qq IS NULL)) and ( (mm > 10 OR mm IS NULL) OR (a.b > -1 OR a.b IS NULL)))
+
+                     AND (m > 0 OR m > 2) AND (N > 1 OR m > 3)
+
+
+                     AND (sa.customer.Qty IS NULL OR sa.customer.Qty < 10) AND ((sa.customer.Qty IS NULL OR sa.customer.Qty < 11))
+
+                     AND (A > 0 AND B < 1) AND ((B > 1 OR A < -2) AND (C < -1 OR A > -1)) OR ((m > 0 OR m > 2) AND (N > 1 OR m > 3)) OR ((m > 0 OR m > 2) AND (N > 1 OR m != 3))
+                           AND ((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) AND ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))
+                           AND ((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+                                   (((a.b > -1 OR a.b IS NULL) OR (qq < 0 OR qq IS NULL)) and ( (mm <> 10 OR mm IS NULL) AND (a.c > -1 OR a.b IS NULL)))
+                               OR  (A > 0 AND B < 1) AND ((B > 1 OR A < -1) AND (C < -1 OR A > -1)) OR ((m > 0 AND m > 2) AND (N > 1 OR m > 3)) OR ((m > 0 OR m > 2) AND (N > 1 OR m != 3))
+                                     AND ((((((sa.customer.c_mktsegment IS NULL OR sa.customer.c_mktsegment <> 'retail')))) AND ((((sa.customer.c_privilege_level IS NULL OR sa.customer.c_privilege_level<1))))))
+                                     AND ((a.b > -1 OR a.b IS NULL) AND (m IS NULL OR m <> 10)) OR
+                                             (((a.b > -1 OR a.b IS NULL) OR (qq < 0 OR qq IS NULL)) and ( (mm <> 11 OR mm IS NULL) AND (a.c > -1 OR a.b IS NULL)))

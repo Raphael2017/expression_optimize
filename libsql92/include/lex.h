@@ -1,6 +1,8 @@
 #ifndef LEX_H
 #define LEX_H
 
+#include <string>
+
 enum TokenType {
     none,
     CARET,
@@ -58,6 +60,7 @@ struct IToken {
     virtual ~IToken() {}
     virtual TokenType type() const  = 0;
     virtual const char *word() const = 0;
+    virtual const char *word_semantic() const = 0;
 };
 
 struct ILex {
@@ -67,6 +70,7 @@ struct ILex {
     virtual unsigned int cur_pos_line() const = 0;
     virtual unsigned int cur_pos_col() const = 0;
     virtual unsigned int cur_pos() const = 0;
+    virtual const std::string& get_token_type_name(TokenType) const = 0;
 };
 
 ILex *make_lex(const char *sql);

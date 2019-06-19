@@ -177,7 +177,12 @@ NullPredicate *make_null_predicate(ILex *lex, ParseResult *pr, RowValueConstruct
     }
     else {
         free_null_predicate(np);
-        pr->error_ = PARSE_FAILED;
+        char ss[256] = { 0 };
+        sprintf(ss, "unexpected %s at line: %d, col: %d expect %s here",
+                lex->get_token_type_name(tk->type()).c_str(), lex->cur_pos_line(), lex->cur_pos_col(),
+                lex->get_token_type_name(NULLX).c_str());
+        pr->fill_error(PARSE_FAILED, ss);
+        return nullptr;
     }
     return np;
 }
@@ -396,8 +401,9 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                             predicae->u.lp_ = lp;
                         } break;
                         default: {
-                            pr->error_ = PARSE_FAILED;
-                            free_predicate(predicae);
+                            char ss[256] = { 0 };
+                            sprintf(ss, "unexpected %s at line: %d, col: %d",
+                                    lex->get_token_type_name(tk->type()).c_str(), lex->cur_pos_line(), lex->cur_pos_col());
                             return nullptr;
                         } break;
                     }
@@ -457,7 +463,10 @@ Predicate *make_predicate(ILex *lex, ParseResult *pr) {
                     predicae->u.op_ = op;
                 } break;
                 default: {
-                    pr->error_ = PARSE_FAILED;
+                    char ss[256] = { 0 };
+                    sprintf(ss, "unexpected %s at line: %d, col: %d",
+                            lex->get_token_type_name(tk->type()).c_str(), lex->cur_pos_line(), lex->cur_pos_col());
+                    pr->fill_error(PARSE_FAILED, ss);
                     free_row_value_ctor(first);
                     free_predicate(predicae);
                     return nullptr;
@@ -502,118 +511,13 @@ ComparisonPredicate *to_comparison_predicate(Predicate *predicate) {
     return predicate->u.cp_;
 }
 
-bool is_same_ref(IdentifierChain *ref1, IdentifierChain *ref2) {
-    IdentifierChain *it1 = nullptr, *it2 = nullptr;
-    for (it1 = ref1, it2 = ref2; it1 != nullptr && it2 != nullptr; it1 = it1->next_, it2 = it2->next_) {
-        if (0 != strcmp(it1->identifier_, it2->identifier_))
-            return false;
-    }
-    if (it1 == nullptr && it2 == nullptr)
-        return true;
-    else
-        return false;
-}
-
-bool is_same_lit(RowValueConstructor *lit1, RowValueConstructor *lit2) {
-    assert(lit1->type_ == RowValueConstructor::INT_LIT || lit1->type_ == RowValueConstructor::STR_LIT);
-    assert(lit2->type_ == RowValueConstructor::INT_LIT || lit2->type_ == RowValueConstructor::STR_LIT);
-    if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::INT_LIT) {
-        return lit1->u.int_lit_ == lit2->u.int_lit_;
-    }
-    else if (lit1->type_ == RowValueConstructor::STR_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        return 0 == strcmp(lit1->u.str_lit_, lit2->u.str_lit_);
-    }
-    else if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        char *end = nullptr;
-        long int l2 = strtol(lit2->u.str_lit_, &end, 10);
-        if (*lit2->u.str_lit_ != '\0' && *end == '\0') {
-            return l2 == lit1->u.int_lit_;
-        }
-        else
-            return false;
-    }
-    else {
-        char *end = nullptr;
-        long int l1 = strtol(lit1->u.str_lit_, &end, 10);
-        if (*lit1->u.str_lit_ != '\0' && *end == '\0') {
-            return l1 == lit2->u.int_lit_;
-        }
-        else
-            return false;
-    }
-}
-
-bool is_lt_lit(RowValueConstructor *lit1, RowValueConstructor *lit2) {
-    assert(lit1->type_ == RowValueConstructor::INT_LIT || lit1->type_ == RowValueConstructor::STR_LIT);
-    assert(lit2->type_ == RowValueConstructor::INT_LIT || lit2->type_ == RowValueConstructor::STR_LIT);
-    if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::INT_LIT) {
-        return lit1->u.int_lit_ < lit2->u.int_lit_;
-    }
-    else if (lit1->type_ == RowValueConstructor::STR_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        return false;
-    }
-    else if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        char *end = nullptr;
-        long int l2 = strtol(lit2->u.str_lit_, &end, 10);
-        if (*lit2->u.str_lit_ != '\0' && *end == '\0') {
-            return l2 > lit1->u.int_lit_;
-        }
-        else
-            return false;
-    }
-    else {
-        char *end = nullptr;
-        long int l1 = strtol(lit1->u.str_lit_, &end, 10);
-        if (*lit1->u.str_lit_ != '\0' && *end == '\0') {
-            return l1 < lit2->u.int_lit_;
-        }
-        else
-            return false;
-    }
-}
-
-bool is_gt_lit(RowValueConstructor *lit1, RowValueConstructor *lit2) {
-    assert(lit1->type_ == RowValueConstructor::INT_LIT || lit1->type_ == RowValueConstructor::STR_LIT);
-    assert(lit2->type_ == RowValueConstructor::INT_LIT || lit2->type_ == RowValueConstructor::STR_LIT);
-    if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::INT_LIT) {
-        return lit1->u.int_lit_ > lit2->u.int_lit_;
-    }
-    else if (lit1->type_ == RowValueConstructor::STR_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        return false;
-    }
-    else if (lit1->type_ == RowValueConstructor::INT_LIT && lit2->type_ == RowValueConstructor::STR_LIT) {
-        char *end = nullptr;
-        long int l2 = strtol(lit2->u.str_lit_, &end, 10);
-        if (*lit2->u.str_lit_ != '\0' && *end == '\0') {
-            return l2 < lit1->u.int_lit_;
-        }
-        else
-            return false;
-    }
-    else {
-        char *end = nullptr;
-        long int l1 = strtol(lit1->u.str_lit_, &end, 10);
-        if (*lit1->u.str_lit_ != '\0' && *end == '\0') {
-            return l1 > lit2->u.int_lit_;
-        }
-        else
-            return false;
-    }
-}
-
-/*
- * support list
- * IS NULL
- * =
- * <>
- * <
- * >
- * <=
- * >=
- * */
 bool contained(Predicate *A, Predicate *B) {
+
     if (A->type_ != B->type_)
+    {
         return false;
+    }
+
     if (A->type_ == Predicate::NP) {
         return A->u.np_->is_not_ == B->u.np_->is_not_ &&
                 is_same_ref(A->u.np_->row_->u.column_ref_, B->u.np_->row_->u.column_ref_);
@@ -628,8 +532,10 @@ bool contained(Predicate *A, Predicate *B) {
 
 
     /* l is REF, r is LIT */
-    if (!is_same_ref(lA->u.column_ref_, lB->u.column_ref_))
+    if (!is_same_ref(lA->u.column_ref_, lB->u.column_ref_)) {
         return false;
+    }
+
 
     /* EQ, NEQ, LT, GT, LTEQ, GTEQ  */
     /* add predicate optimize rule here */
